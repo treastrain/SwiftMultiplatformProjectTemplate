@@ -7,8 +7,8 @@ on:
     branches: [ "main" ]
 
 jobs:
-  build:
-    name: Swift Build
+  build-host:
+    name: Swift Build (Host)
     strategy:
       fail-fast: false
       matrix:
@@ -48,3 +48,51 @@ jobs:
       run: swift --version
     - name: Build
       run: swift build -v
+
+  prepare-for-container:
+    name: Prepare Environment for Container
+    runs-on: ubuntu-slim
+    outputs:
+      swift_version: ${{ steps.read_version.outputs.version }}
+    steps:
+    - uses: actions/checkout@v6
+    - name: Read .swift-version
+      id: read_version
+      run: |
+        VERSION=$(cat .swift-version | xargs)
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+  build-container:
+    name: Swift Build (Container)
+    needs: prepare-for-container
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+        - os: ubuntu-latest
+          tag: noble
+          workspace: /workspace
+        - os: ubuntu-latest
+          tag: jammy
+          workspace: /workspace
+        - os: ubuntu-latest
+          tag: bookworm
+          workspace: /workspace
+        - os: ubuntu-latest
+          tag: amazonlinux2
+          workspace: /workspace
+        - os: ubuntu-latest
+          tag: rhel-ubi9
+          workspace: /workspace
+        - os: windows-2025
+          tag: windowsservercore-ltsc2022
+          workspace: C:\workspace
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@v6
+    - name: Show Swift Version
+      run: |
+        docker run --rm swift:${{ needs.prepare-for-container.outputs.swift_version }}-${{ matrix.tag }} swift --version
+    - name: Build
+      run: |
+        docker run --rm -v "${{ github.workspace }}:${{ matrix.workspace }}" -w "${{ matrix.workspace }}" swift:${{ needs.prepare-for-container.outputs.swift_version }}-${{ matrix.tag }} swift build -v
