@@ -8,7 +8,7 @@ on:
 
 jobs:
   build-host:
-    name: Swift Build (Host)
+    name: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
@@ -50,26 +50,31 @@ jobs:
       run: swift build -v
 
   build-sdk:
-    name: Swift Build (SDK)
+    name: ${{ matrix.target.name }} (build on ${{ matrix.os }})
     strategy:
       fail-fast: false
       matrix:
         os: [macos-26, macos-26-intel, ubuntu-24.04, ubuntu-22.04]
         target:
-        - bundle: static-linux-0.1.0
+        - name: Static Linux (x86_64)
+          bundle: static-linux-0.1.0
           sdk: x86_64-swift-linux-musl
           checksum: d2078b69bdeb5c31202c10e9d8a11d6f66f82938b51a4b75f032ccb35c4c286c
-        - bundle: static-linux-0.1.0
+        - name: Static Linux (aarch64)
+          bundle: static-linux-0.1.0
           sdk: aarch64-swift-linux-musl
           checksum: d2078b69bdeb5c31202c10e9d8a11d6f66f82938b51a4b75f032ccb35c4c286c
-        - bundle: wasm
+        - name: WebAssembly
+          bundle: wasm
           sdk: swift-6.3-RELEASE_wasm
           checksum: 9fa4016ee632c7e9e906608ec3b55cf13dfc4dff44e47574c5af58064dc33fd9
-        - bundle: android
+        - name: Android (x86_64)
+          bundle: android
           sdk: x86_64-unknown-linux-android28
           build-option: --static-swift-stdlib
           checksum: 2f2942c4bcea7965a08665206212c66991dabe23725aeec7c4365fc91acad088
-        - bundle: android
+        - name: Android (aarch64)
+          bundle: android
           sdk: aarch64-unknown-linux-android28
           build-option: --static-swift-stdlib
           checksum: 2f2942c4bcea7965a08665206212c66991dabe23725aeec7c4365fc91acad088
@@ -152,28 +157,34 @@ jobs:
         echo "version=$VERSION" >> $GITHUB_OUTPUT
 
   build-container:
-    name: Swift Build (Container)
+    name: ${{ matrix.name }} (Container)
     needs: prepare-for-container
     strategy:
       fail-fast: false
       matrix:
         include:
-        - os: ubuntu-latest
+        - name: Ubuntu 24.04
+          os: ubuntu-latest
           tag: noble
           workspace: /workspace
-        - os: ubuntu-latest
+        - name: Ubuntu 22.04
+          os: ubuntu-latest
           tag: jammy
           workspace: /workspace
-        - os: ubuntu-latest
+        - name: Debian 12
+          os: ubuntu-latest
           tag: bookworm
           workspace: /workspace
-        - os: ubuntu-latest
+        - name: Amazon Linux 2
+          os: ubuntu-latest
           tag: amazonlinux2
           workspace: /workspace
-        - os: ubuntu-latest
+        - name: Red Hat Universal Base Image 9
+          os: ubuntu-latest
           tag: rhel-ubi9
           workspace: /workspace
-        - os: windows-2025
+        - name: Windows Server Core LTSC 2022
+          os: windows-2025
           tag: windowsservercore-ltsc2022
           workspace: C:\workspace
     runs-on: ${{ matrix.os }}
