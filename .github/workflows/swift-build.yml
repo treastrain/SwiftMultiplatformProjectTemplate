@@ -15,6 +15,21 @@ jobs:
         os: [macos-26, macos-26-intel]
     runs-on: ${{ matrix.os }}
     steps:
+    - name: Install swiftly
+      run: |
+        case "$RUNNER_OS" in
+          macOS)
+            curl -L https://download.swift.org/swiftly/darwin/swiftly.pkg > swiftly.pkg
+            installer -pkg swiftly.pkg -target CurrentUserHomeDirectory
+            ~/.swiftly/bin/swiftly init -y --skip-install
+            . "$HOME/.swiftly/env.sh"
+            ;;
+          *)
+            echo "Unsupported OS: $RUNNER_OS"
+            exit 1
+            ;;
+        esac
+        echo "$(dirname $(which swiftly))" >> $GITHUB_PATH
     - uses: actions/checkout@v6
     - name: Build
       run: swift build -v
