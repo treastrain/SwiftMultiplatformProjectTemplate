@@ -31,5 +31,9 @@ jobs:
         esac
         echo "$(dirname $(which swiftly))" >> $GITHUB_PATH
     - uses: actions/checkout@v6
+    - name: Install the toolchain
+      run: swiftly install -u -y
+    - name: Show Swift Version
+      run: swift --version
     - name: Build
       run: swift build -v
