@@ -49,6 +49,95 @@ jobs:
     - name: Build
       run: swift build -v
 
+  build-sdk:
+    name: Swift Build (SDK)
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-26, macos-26-intel, ubuntu-24.04, ubuntu-22.04]
+        target:
+        - bundle: static-linux-0.1.0
+          sdk: x86_64-swift-linux-musl
+          checksum: d2078b69bdeb5c31202c10e9d8a11d6f66f82938b51a4b75f032ccb35c4c286c
+        - bundle: static-linux-0.1.0
+          sdk: aarch64-swift-linux-musl
+          checksum: d2078b69bdeb5c31202c10e9d8a11d6f66f82938b51a4b75f032ccb35c4c286c
+        - bundle: wasm
+          sdk: swift-6.3-RELEASE_wasm
+          checksum: 9fa4016ee632c7e9e906608ec3b55cf13dfc4dff44e47574c5af58064dc33fd9
+        - bundle: android
+          sdk: x86_64-unknown-linux-android28
+          build-option: --static-swift-stdlib
+          checksum: 2f2942c4bcea7965a08665206212c66991dabe23725aeec7c4365fc91acad088
+        - bundle: android
+          sdk: aarch64-unknown-linux-android28
+          build-option: --static-swift-stdlib
+          checksum: 2f2942c4bcea7965a08665206212c66991dabe23725aeec7c4365fc91acad088
+    runs-on: ${{ matrix.os }}
+    steps:
+    - name: Install swiftly
+      run: |
+        case "$RUNNER_OS" in
+          macOS)
+            curl -L https://download.swift.org/swiftly/darwin/swiftly.pkg > swiftly.pkg
+            installer -pkg swiftly.pkg -target CurrentUserHomeDirectory
+            ~/.swiftly/bin/swiftly init -y --skip-install
+            . "$HOME/.swiftly/env.sh"
+            ;;
+          Linux)
+            sudo apt-get update
+            sudo apt-get install -y libcurl4-openssl-dev
+            if [ "${{ matrix.os }}" = "ubuntu-22.04" ]; then
+              sudo apt-get install -y pkg-config python3-lldb-13
+            fi
+            curl -L https://download.swift.org/swiftly/linux/swiftly-$(uname -m).tar.gz > swiftly.tar.gz
+            tar zxf swiftly.tar.gz
+            ./swiftly init -y --skip-install
+            . "$HOME/.local/share/swiftly/env.sh"
+            ;;
+          *)
+            echo "Unsupported OS: $RUNNER_OS"
+            exit 1
+            ;;
+        esac
+        echo "$(dirname $(which swiftly))" >> $GITHUB_PATH
+    - uses: actions/checkout@v6
+    - name: Install the toolchain
+      run: swiftly install -u -y
+    - name: Show Swift Version
+      run: swift --version
+    - name: Install a given SDK bundle
+      run: |
+        RAW_VERSION=$(cat .swift-version | xargs)
+        URL_VERSION=$(echo "$RAW_VERSION" | sed 's/\.0$//')
+        BUNDLE="${{ matrix.target.bundle }}"
+        case "$BUNDLE" in
+          static-linux-*)
+            SDK_DIR="static-sdk"
+            ;;
+          *)
+            SDK_DIR="${BUNDLE}-sdk"
+            ;;
+        esac
+        BUNDLE_URL="https://download.swift.org/swift-${URL_VERSION}-release/${SDK_DIR}/swift-${URL_VERSION}-RELEASE/swift-${URL_VERSION}-RELEASE_${BUNDLE}.artifactbundle.tar.gz"
+        swift sdk install "$BUNDLE_URL" --checksum ${{ matrix.target.checksum }}
+        if [ "$BUNDLE" = "android" ]; then
+          mkdir -p ~/android-ndk
+          cd ~/android-ndk
+          curl -fSLO "https://dl.google.com/android/repository/android-ndk-r27d-$(uname -s | tr '[:upper:]' '[:lower:]').zip"
+          unzip -q android-ndk-r27d-*.zip
+          echo "ANDROID_NDK_HOME=$PWD/android-ndk-r27d" >> $GITHUB_ENV
+          SWIFT_SDKS_DIR=$(find $HOME -maxdepth 5 -type d -name "swift-sdks" 2>/dev/null | head -n 1)
+          if [ -z "$SWIFT_SDKS_DIR" ]; then
+            echo "Error: swift-sdks directory not found"
+            exit 1
+          fi
+          cd "$(dirname "$SWIFT_SDKS_DIR")"
+          ./swift-sdks/*_android.artifactbundle/swift-android/scripts/setup-android-sdk.sh
+        fi
+    - name: Build
+      run: swift build -v --swift-sdk ${{ matrix.target.sdk }} ${{ matrix.target.build-option }}
+
   prepare-for-container:
     name: Prepare Environment for Container
     runs-on: ubuntu-slim
