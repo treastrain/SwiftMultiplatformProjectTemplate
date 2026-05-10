@@ -1,6 +1,6 @@
 # SwiftMultiplatformProjectTemplate
 
-![Swift: 6.3](https://img.shields.io/badge/Swift-6.3-orange.svg)
+![Swift: 6.3.1](https://img.shields.io/badge/Swift-6.3.1-orange.svg)
 [![swift build](https://github.com/treastrain/SwiftMultiplatformProjectTemplate/actions/workflows/swift-build.yml/badge.svg)](https://github.com/treastrain/SwiftMultiplatformProjectTemplate/actions/workflows/swift-build.yml)
 
 > [!NOTE]

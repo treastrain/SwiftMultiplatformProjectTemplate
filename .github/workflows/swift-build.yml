@@ -59,25 +59,25 @@ jobs:
         - name: Static Linux (x86_64)
           bundle: static-linux-0.1.0
           sdk: x86_64-swift-linux-musl
-          checksum: d2078b69bdeb5c31202c10e9d8a11d6f66f82938b51a4b75f032ccb35c4c286c
+          checksum: fac05271c1f7d060bd203240ce5251d5ca902d30ac899f553765dbb3a88b97ad
         - name: Static Linux (aarch64)
           bundle: static-linux-0.1.0
           sdk: aarch64-swift-linux-musl
-          checksum: d2078b69bdeb5c31202c10e9d8a11d6f66f82938b51a4b75f032ccb35c4c286c
+          checksum: fac05271c1f7d060bd203240ce5251d5ca902d30ac899f553765dbb3a88b97ad
         - name: WebAssembly
           bundle: wasm
-          sdk: swift-6.3-RELEASE_wasm
-          checksum: 9fa4016ee632c7e9e906608ec3b55cf13dfc4dff44e47574c5af58064dc33fd9
+          sdk: swift-6.3.1-RELEASE_wasm
+          checksum: bd47baa20771f366d8beed7970afaa30742b2210097afd15f85427226d8f4cf2
         - name: Android (x86_64)
           bundle: android
           sdk: x86_64-unknown-linux-android28
           build-option: --static-swift-stdlib
-          checksum: 2f2942c4bcea7965a08665206212c66991dabe23725aeec7c4365fc91acad088
+          checksum: 8193a4e96538635131a154736c8896fba0e5a1c30e065524f00ed78719bac35a
         - name: Android (aarch64)
           bundle: android
           sdk: aarch64-unknown-linux-android28
           build-option: --static-swift-stdlib
-          checksum: 2f2942c4bcea7965a08665206212c66991dabe23725aeec7c4365fc91acad088
+          checksum: 8193a4e96538635131a154736c8896fba0e5a1c30e065524f00ed78719bac35a
     runs-on: ${{ matrix.os }}
     steps:
     - name: Install swiftly
